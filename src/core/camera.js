@@ -5,6 +5,7 @@ export class Camera {
     this.position = new Vec2();
     this.zoom = 1;
 
+    this.smoothness = 1;
     this.target = null;
   }
 
@@ -14,7 +15,10 @@ export class Camera {
 
   update() {
     if (this.target) {
-      this.position.copy(this.target.position);
+      const targetx = this.target.position.x;
+      const targety = this.target.position.y;
+
+      this.position.set(targetx * this.smoothness, targety * this.smoothness);
     }
   }
 

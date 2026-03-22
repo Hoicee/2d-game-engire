@@ -1,11 +1,21 @@
-import createREGL from "regl";
+import * as PIXI from "pixi.js";
 
-export function createRenderer(canvas) {
-  const regl = createREGL({
+export async function createRenderer(canvas) {
+  const app = new PIXI.Application();
+
+  await app.init({
     canvas: canvas,
+    resizeTo: window,
+    autoDensity: false,
+    backgroundColor: "#000000",
   });
 
+  app.ticker.autoStart = false;
+  app.ticker.stop();
+
   return {
+    app,
+    stage: app.stage,
     camera: null,
 
     setCamera(camera) {
@@ -13,22 +23,38 @@ export function createRenderer(canvas) {
     },
 
     clear() {
-      regl.clear({
-        color: [0, 0, 0, 1],
-      });
+      // Pixi handles clearing automatically
     },
 
-    worldToScreen(pos) {
-      if (!this.camera) return pos;
+    createRect(width, height, color = 0xffffff) {
+      const graphics = new PIXI.Graphics()
+        .rect(0, 0, width, height)
+        .fill(color);
 
-      return {
-        x: pos.x - this.camera.position.x,
-        y: pos.y - this.camera.position.y,
-      };
+      return graphics;
     },
 
-    _getContext() {
-      return regl;
+    addToStage(displayObject) {
+      this.stage.addChild(displayObject);
+    },
+
+    removeFromStage(displayObject) {
+      this.stage.removeChild(displayObject);
+    },
+
+    updateTransform(displayObject, position) {
+      if (!this.camera) {
+        displayObject.x = position.x;
+        displayObject.y = position.y;
+        return;
+      }
+
+      displayObject.x = position.x - this.camera.position.x;
+      displayObject.y = position.y - this.camera.position.y;
+    },
+
+    render(time) {
+      this.app.ticker.update(time);
     },
   };
 }

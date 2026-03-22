@@ -15,6 +15,10 @@ export class Game {
     this.running = false;
   }
 
+  async init() {
+    this.renderer = await createRenderer(this.canvas);
+  }
+
   pushScene(scene) {
     this.scenes.push(scene);
 
@@ -52,14 +56,25 @@ export class Game {
     this.running = false;
   }
 
-  loop(currentTime) {
+  loop(time) {
     if (!this.running) return;
 
-    this.time.update(currentTime);
+    this.time.update(time);
 
-    this.update(this.time.delta);
-    this.render();
+    const dt = this.time.delta;
 
+    const scene = this.getScene();
+    if (scene && scene.updateEnabled) {
+      scene.update(dt);
+    }
+
+    if (scene && scene.renderEnabled) {
+      scene.render();
+    }
+
+    this.renderer.render(time);
+
+    this.input.update();
     requestAnimationFrame(this.loop.bind(this));
   }
 
@@ -68,21 +83,20 @@ export class Game {
 
     if (!scene) return;
 
-    if (scene.updateEnabled !== false) {
+    if (scene.updateEnabled) {
       scene.update(dt);
     }
   }
 
   render() {
-    this.renderer.clear();
-
     const scene = this.getScene();
-
     if (!scene) return;
 
-    if (scene.renderEnabled !== false) {
+    if (scene.renderEnabled) {
       scene.render(this.renderer);
     }
+
+    this.renderer.render();
   }
 
   getInput() {
