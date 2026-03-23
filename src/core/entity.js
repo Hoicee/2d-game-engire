@@ -3,7 +3,7 @@ import { Vec2 } from "../math/vec2.js";
 let ENTITY_ID = 0;
 
 export class Entity {
-  constructor() {
+  constructor(options = { size: new Vec2(0, 0) }) {
     this.id = ENTITY_ID++;
 
     this.position = new Vec2();
@@ -13,11 +13,12 @@ export class Entity {
     this.useGravity = false;
 
     this.view = null;
-    this.size = new Vec2(50, 50);
-    this.color = "red";
+    this.size = options.size;
 
     this.active = true;
     this.tags = new Set();
+
+    this.origin = { x: 0, y: 0 };
 
     this.hasCollision = false;
     this.isStatic = false;
@@ -27,6 +28,30 @@ export class Entity {
     this.maxVelocity = 3000;
 
     this._inputAcceleration = new Vec2();
+
+    this.sprite = null;
+
+    this.debug = false;
+    this.debugGraphics = null;
+  }
+
+  addSprite(sprite, renderer) {
+    this.sprite = sprite;
+    if (!this.sprite) return;
+
+    this.view = this.sprite.getView();
+    renderer.addToStage(this.view);
+    if (this.size.x === 0 && this.size.y === 0) {
+      const tex = this.sprite.getView().texture;
+
+      this.size.set(
+        tex.width * this.sprite.scale,
+        tex.height * this.sprite.scale,
+      );
+    }
+
+    this.origin.x = this.sprite.anchor.x;
+    this.origin.y = this.sprite.anchor.y;
   }
 
   addTag(tag) {
@@ -62,6 +87,10 @@ export class Entity {
 
     this.view = renderer.createRect(this.size.x, this.size.y, this.color);
 
+    if (this.debug) {
+      this.debugGraphics = renderer.createDebugRect();
+    }
+
     renderer.addToStage(this.view);
   }
 
@@ -80,6 +109,9 @@ export class Entity {
 
     this.velocity.x *= this.friction;
 
+    if (Math.abs(this.velocity.x) < 0.0001) this.velocity.x = 0;
+    if (Math.abs(this.velocity.y) < 0.0001) this.velocity.y = 0;
+
     this.velocity.x = Math.max(
       -this.maxVelocity,
       Math.min(this.maxVelocity, this.velocity.x),
@@ -94,6 +126,17 @@ export class Entity {
 
     this._inputAcceleration.set(0, 0);
 
+    if (this.sprite) {
+      const tex = this.sprite.getView().texture;
+
+      this.size.set(
+        tex.width * this.sprite.scale,
+        tex.height * this.sprite.scale,
+      );
+
+      this.sprite.update(dt);
+    }
+
     this.isGrounded = false;
   }
 
@@ -101,7 +144,28 @@ export class Entity {
     if (!this.view) return;
 
     this.view.visible = this.visible;
+
     renderer.updateTransform(this.view, this.position);
+
+    if (this.debug && this.debugGraphics) {
+      const left = this.position.x - this.size.x * this.origin.x;
+      const top = this.position.y - this.size.y * this.origin.y;
+
+      const updated = renderer.updateTransform(
+        { x: left, y: top },
+        { x: left, y: top },
+      );
+
+      renderer.drawRect(
+        this.debugGraphics,
+        updated.x,
+        updated.y,
+        this.size.x,
+        this.size.y,
+      );
+
+      renderer.drawPoint(this.debugGraphics, updated.x, updated.y);
+    }
   }
 
   destroy() {

@@ -1,5 +1,6 @@
 import { Camera } from "./camera.js";
 import { aabbCollision } from "../math/collision.js";
+import { getBounds } from "../math/collision.js";
 
 export class Scene {
   constructor(game) {
@@ -13,6 +14,10 @@ export class Scene {
 
   addEntity(entity) {
     this.entities.push(entity);
+
+    if (this.debug) {
+      this.debugGraphics = this.game.renderer.createDebugRect();
+    }
 
     entity.createView(this.game.renderer);
   }
@@ -44,10 +49,8 @@ export class Scene {
     this.onUpdate(dt);
 
     for (let entity of this.entities) {
-      entity.update(dt);
+      entity.update(dt, this.game.renderer);
     }
-
-    this.camera.update();
 
     for (let entity of this.entities) {
       if (!entity.hasCollision || entity.isStatic) continue;
@@ -62,34 +65,36 @@ export class Scene {
       }
     }
 
+    this.camera.update();
+
     this.entities = this.entities.filter((e) => e.active);
   }
 
   resolveCollision(a, b) {
-    const dx = a.position.x + a.size.x / 2 - (b.position.x + b.size.x / 2);
-    const dy = a.position.y + a.size.y / 2 - (b.position.y + b.size.y / 2);
+    const A = getBounds(a);
+    const B = getBounds(b);
 
-    const combinedHalfWidths = (a.size.x + b.size.x) / 2;
-    const combinedHalfHeights = (a.size.y + b.size.y) / 2;
+    const overlapX = Math.min(A.right - B.left, B.right - A.left);
+    const overlapY = Math.min(A.bottom - B.top, B.bottom - A.top);
 
-    const overlapX = combinedHalfWidths - Math.abs(dx);
-    const overlapY = combinedHalfHeights - Math.abs(dy);
+    if (overlapX <= 0 || overlapY <= 0) return;
 
     if (overlapX < overlapY) {
-      if (dx > 0) {
-        a.position.x += overlapX;
-      } else {
+      if (a.velocity.x > 0) {
         a.position.x -= overlapX;
+      } else if (a.velocity.x < 0) {
+        a.position.x += overlapX;
       }
+
       a.velocity.x = 0;
     } else {
-      if (dy > 0) {
-        a.position.y += overlapY;
-      } else {
+      if (a.velocity.y > 0) {
         a.position.y -= overlapY;
-
         a.velocity.y = 0;
         a.isGrounded = true;
+      } else if (a.velocity.y < 0) {
+        a.position.y += overlapY;
+        a.velocity.y = 0;
       }
     }
   }

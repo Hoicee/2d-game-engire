@@ -1,12 +1,14 @@
 import { Time } from "./time.js";
 import { Input } from "./input.js";
-import { createRenderer } from "../render/renderer.js";
+import { Renderer } from "../render/renderer.js";
+import { Entity } from "./entity.js";
+import { Scene } from "./scene.js";
 
 export class Game {
   constructor(canvas) {
     this.canvas = canvas;
 
-    this.renderer = createRenderer(canvas);
+    this.renderer = new Renderer(canvas);
     this.time = new Time();
     this.input = new Input(canvas);
 
@@ -16,7 +18,7 @@ export class Game {
   }
 
   async init() {
-    this.renderer = await createRenderer(this.canvas);
+    this.renderer.init();
   }
 
   pushScene(scene) {
@@ -98,6 +100,16 @@ export class Game {
 
     this.renderer.render();
   }
+
+  createScene() {
+    return new Scene(this);
+  }
+
+  createEntity() {
+    return new Entity();
+  }
+
+  createSprite() {}
 
   getInput() {
     return this.input;

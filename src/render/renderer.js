@@ -1,60 +1,90 @@
 import * as PIXI from "pixi.js";
+export class Renderer {
+  constructor(canvas) {
+    this.app = new PIXI.Application();
+    this.stage = this.app.stage;
+    this.canvas = canvas;
+    this.camera = null;
+  }
 
-export async function createRenderer(canvas) {
-  const app = new PIXI.Application();
+  async init() {
+    await this.app.init({
+      canvas: this.canvas,
+      resizeTo: window,
+      autoDensity: false,
+      backgroundColor: "#000000",
+      antialias: true,
+      resolution: window.devicePixelRatio,
+    });
 
-  await app.init({
-    canvas: canvas,
-    resizeTo: window,
-    autoDensity: false,
-    backgroundColor: "#000000",
-  });
+    this.app.ticker.autoStart = false;
+    this.app.ticker.stop();
+  }
 
-  app.ticker.autoStart = false;
-  app.ticker.stop();
+  setCamera(camera) {
+    this.camera = camera;
+  }
 
-  return {
-    app,
-    stage: app.stage,
-    camera: null,
+  clear() {
+    // Pixi handles clearing automatically
+  }
 
-    setCamera(camera) {
-      this.camera = camera;
-    },
+  createSpriteView() {
+    const view = new PIXI.Sprite();
+    this.view.texture.source.scaleMode = "nearest";
 
-    clear() {
-      // Pixi handles clearing automatically
-    },
+    return view;
+  }
 
-    createRect(width, height, color = 0xffffff) {
-      const graphics = new PIXI.Graphics()
-        .rect(0, 0, width, height)
-        .fill(color);
+  createRect(width, height, color = 0xffffff) {
+    const graphics = new PIXI.Graphics().rect(0, 0, width, height).fill(color);
 
-      return graphics;
-    },
+    return graphics;
+  }
 
-    addToStage(displayObject) {
-      this.stage.addChild(displayObject);
-    },
+  createCircle(diameter, color) {}
 
-    removeFromStage(displayObject) {
-      this.stage.removeChild(displayObject);
-    },
+  addToStage(displayObject) {
+    this.stage.addChild(displayObject);
+  }
 
-    updateTransform(displayObject, position) {
-      if (!this.camera) {
-        displayObject.x = position.x;
-        displayObject.y = position.y;
-        return;
-      }
+  removeFromStage(displayObject) {
+    this.stage.removeChild(displayObject);
+  }
 
-      displayObject.x = position.x - this.camera.position.x;
-      displayObject.y = position.y - this.camera.position.y;
-    },
+  updateTransform(displayObject, position) {
+    if (!this.camera) {
+      displayObject.x = position.x;
+      displayObject.y = position.y;
+      return;
+    }
 
-    render(time) {
-      this.app.ticker.update(time);
-    },
-  };
+    displayObject.x = position.x - this.camera.position.x;
+    displayObject.y = position.y - this.camera.position.y;
+
+    return displayObject;
+  }
+
+  render(time) {
+    this.app.ticker.update(time);
+  }
+
+  createDebugRect() {
+    const g = new PIXI.Graphics();
+    g.fill(0xffffff);
+    this.stage.addChild(g);
+    return g;
+  }
+
+  drawRect(graphics, x, y, w, h) {
+    graphics.clear();
+    graphics.rect(x, y, w, h);
+    graphics.stroke({ width: 1, color: 0xff0000 });
+    graphics.fill(0xffffff);
+  }
+
+  drawPoint(graphics, x, y) {
+    graphics.rect(x - 2, y - 2, 4, 4);
+    graphics.fill({ color: 0x00ff00 });
+  }
 }
