@@ -33,8 +33,8 @@ export class Vec2 {
   }
 
   set(x, y) {
-    this.x = x;
-    this.y = y;
+    this.x = x ?? this.x;
+    this.y = y ?? this.y;
     return this;
   }
 }

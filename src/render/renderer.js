@@ -21,6 +21,11 @@ export class Renderer {
     this.app.ticker.stop();
   }
 
+  async loadTexture(route) {
+    const texture = await PIXI.Assets.load(route);
+    return texture;
+  }
+
   setCamera(camera) {
     this.camera = camera;
   }
@@ -31,7 +36,7 @@ export class Renderer {
 
   createSpriteView() {
     const view = new PIXI.Sprite();
-    this.view.texture.source.scaleMode = "nearest";
+    view.texture.source.scaleMode = "nearest";
 
     return view;
   }

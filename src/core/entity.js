@@ -1,10 +1,13 @@
 import { Vec2 } from "../math/vec2.js";
+import * as PIXI from "pixi.js";
 
 let ENTITY_ID = 0;
 
 export class Entity {
-  constructor(options = { size: new Vec2(0, 0) }) {
+  constructor(game, options = { size: new Vec2(0, 0) }) {
     this.id = ENTITY_ID++;
+
+    this.game = game;
 
     this.position = new Vec2();
     this.velocity = new Vec2();
@@ -35,12 +38,33 @@ export class Entity {
     this.debugGraphics = null;
   }
 
-  addSprite(sprite, renderer) {
+  setSprite(resource_tag, cut_options) {
+    const sprite = this.game.createSprite(resource_tag);
+
     this.sprite = sprite;
     if (!this.sprite) return;
 
     this.view = this.sprite.getView();
-    renderer.addToStage(this.view);
+
+    if (cut_options) {
+      const rect = new PIXI.Rectangle(
+        cut_options.x,
+        cut_options.y,
+        cut_options.w,
+        cut_options.h,
+      );
+
+      this.view.texture.source.scaleMode = "nearest";
+
+      const newTexture = new PIXI.Texture({
+        source: this.view.texture.source,
+        frame: rect,
+      });
+
+      this.view.texture = newTexture;
+    }
+
+    this.game.renderer.addToStage(this.view);
     if (this.size.x === 0 && this.size.y === 0) {
       const tex = this.sprite.getView().texture;
 
@@ -52,6 +76,18 @@ export class Entity {
 
     this.origin.x = this.sprite.anchor.x;
     this.origin.y = this.sprite.anchor.y;
+
+    return this.sprite;
+  }
+
+  play(tag) {
+    if (!this.sprite) return;
+    this.sprite.play(tag);
+  }
+
+  stop(tag) {
+    if (!this.sprite) return;
+    this.sprite.stop(tag);
   }
 
   addTag(tag) {

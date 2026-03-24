@@ -3,7 +3,13 @@ import { Input } from "./input.js";
 import { Renderer } from "../render/renderer.js";
 import { Entity } from "./entity.js";
 import { Scene } from "./scene.js";
+import { Sprite, SpriteResource } from "./sprite.js";
 
+export async function startGame(canvas) {
+  const game = new Game(canvas);
+  await game.init();
+  return game;
+}
 export class Game {
   constructor(canvas) {
     this.canvas = canvas;
@@ -13,6 +19,8 @@ export class Game {
     this.input = new Input(canvas);
 
     this.scenes = [];
+
+    this.spriteResourceMap = new Map();
 
     this.running = false;
   }
@@ -102,14 +110,29 @@ export class Game {
   }
 
   createScene() {
-    return new Scene(this);
+    return new Scene(this.renderer);
   }
 
   createEntity() {
-    return new Entity();
+    return new Entity(this);
   }
 
-  createSprite() {}
+  async loadSprite(tag, route) {
+    const spriteResource = await SpriteResource.load(this.renderer, route);
+    this.spriteResourceMap.set(tag, spriteResource);
+    return spriteResource;
+  }
+
+  createSprite(resource_tag) {
+    if (!this.spriteResourceMap.has(resource_tag))
+      throw new Error("No resource found");
+    return new Sprite(this.spriteResourceMap.get(resource_tag), this.renderer);
+  }
+
+  async loadTexture(route) {
+    const texture = await this.renderer.loadTexture(route);
+    return texture;
+  }
 
   getInput() {
     return this.input;

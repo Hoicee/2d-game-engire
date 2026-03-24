@@ -1,11 +1,70 @@
 import * as PIXI from "pixi.js";
+import { Animation } from "./animation";
+
+export class SpriteResource {
+  constructor(texture) {
+    this.texture = texture;
+    this.animations = new Map();
+  }
+
+  static async load(renderer, url) {
+    const texture = await renderer.loadTexture(url);
+    return new SpriteResource(texture);
+  }
+
+  generateFrames({
+    startX = 0,
+    startY = 0,
+    frameWidth,
+    frameHeight,
+    gapX = 0,
+    gapY = 0,
+    columns,
+    rows,
+  }) {
+    const frames = [];
+
+    for (let y = 0; y < rows; y++) {
+      for (let x = 0; x < columns; x++) {
+        frames.push({
+          texture: this.texture,
+          x: startX + x * (frameWidth + gapX),
+          y: startY + y * (frameHeight + gapY),
+          w: frameWidth,
+          h: frameHeight,
+        });
+      }
+    }
+
+    return frames;
+  }
+
+  addAnimation(name, frames, speed = 10) {
+    this.animations.set(
+      name,
+      new Animation(this.generateFrames(frames), { speed }),
+    );
+  }
+
+  getAnimation(name) {
+    return this.animations.get(name);
+  }
+}
 
 export class Sprite {
-  constructor(texture = null) {
-    this.view = new PIXI.Sprite();
-    this.view.texture.source.scaleMode = "nearest";
+  constructor(resource, renderer) {
+    // this.view = new PIXI.Sprite();
+    // this.view.texture.source.scaleMode = "nearest";
 
-    this.animations = new Map();
+    this.resource = resource;
+
+    this.texture = resource.texture;
+    this.defaultTexture = this.texture;
+    this.usingDefault = true;
+
+    this.view = renderer.createSpriteView();
+    this.view.texture = this.texture;
+
     this.current = null;
 
     this.currentFrame = 0;
@@ -16,13 +75,6 @@ export class Sprite {
 
     this.anchor = { x: 0.5, y: 1 };
     this.view.anchor.set(0.5, 1);
-
-    this.defaultTexture = texture;
-    this.usingDefault = true;
-
-    if (texture) {
-      this.setTexture(texture);
-    }
   }
 
   setAnchor(x, y) {
@@ -45,13 +97,6 @@ export class Sprite {
     this.view.scale.set(scale);
   }
 
-  setTexture(texture) {
-    this.defaultTexture = texture;
-    this.usingDefault = true;
-
-    this.view.texture = texture;
-  }
-
   setFrame(x, y, w, h) {
     if (!this.defaultTexture) return;
 
@@ -70,7 +115,7 @@ export class Sprite {
   play(name) {
     if (this.current === name) return;
 
-    const anim = this.animations.get(name);
+    const anim = this.resource.animations.get(name);
     if (!anim) return;
 
     this.current = name;
@@ -94,7 +139,7 @@ export class Sprite {
   update(dt) {
     if (!this.current) return;
 
-    const anim = this.animations.get(this.current);
+    const anim = this.resource.animations.get(this.current);
     if (!anim) return;
 
     this.time += dt;
@@ -134,38 +179,5 @@ export class Sprite {
 
   getView() {
     return this.view;
-  }
-}
-
-export class SpriteSheet {
-  constructor(texture) {
-    this.texture = texture;
-  }
-
-  generateGrid({
-    startX = 0,
-    startY = 0,
-    frameWidth,
-    frameHeight,
-    gapX = 0,
-    gapY = 0,
-    columns,
-    rows,
-  }) {
-    const frames = [];
-
-    for (let y = 0; y < rows; y++) {
-      for (let x = 0; x < columns; x++) {
-        frames.push({
-          texture: this.texture,
-          x: startX + x * (frameWidth + gapX),
-          y: startY + y * (frameHeight + gapY),
-          w: frameWidth,
-          h: frameHeight,
-        });
-      }
-    }
-
-    return frames;
   }
 }

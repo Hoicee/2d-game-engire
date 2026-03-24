@@ -1,24 +1,16 @@
-import { Game, Scene, Entity, Sprite, SpriteSheet } from "./index.js";
-import { Animation as Anim } from "./index.js";
-import * as PIXI from "pixi.js";
+import { startGame } from "./index.js";
 
 const canvas = document.getElementById("game");
 
-canvas.imageSmoothingEnabled = false;
-canvas.mozImageSmoothingEnabled = false;
-canvas.webkitImageSmoothingEnabled = false;
-canvas.msImageSmoothingEnabled = false;
-
-const game = new Game(canvas);
-await game.init();
-
-const scene = game.createScene();
+const game = await startGame(canvas);
 
 const player = game.createEntity();
 player.useGravity = true;
 player.hasCollision = true;
 player.friction = 0.98;
 player.debug = true;
+
+const scene = game.createScene();
 
 scene.addEntity(player);
 scene.getCamera().follow(player);
@@ -31,41 +23,71 @@ ground.size.set(400, 50);
 ground.position.set(0, 400);
 ground.color = "green";
 
+const ground2 = game.createEntity();
+ground2.isStatic = true;
+ground2.hasCollision = true;
+ground2.size.set(400, 100);
+ground2.position.set(100, 200);
+ground2.color = "green";
+
 scene.addEntity(ground);
+scene.addEntity(ground2);
 
-const texture = await PIXI.Assets.load("../assets/knight.png");
+const knight = await game.loadSprite("knight", "../assets/knight.png");
 
-const sheet = new SpriteSheet(texture);
+knight.addAnimation(
+  "idle",
+  {
+    startX: 8,
+    startY: 8,
+    frameWidth: 16,
+    frameHeight: 20,
+    gapX: 16,
+    columns: 4,
+    rows: 1,
+  },
+  5,
+);
 
-const frames = sheet.generateGrid({
-  startX: 8,
-  startY: 8,
-  frameWidth: 16,
-  frameHeight: 20,
-  gapX: 16,
-  columns: 4,
-  rows: 1,
-});
+knight.addAnimation(
+  "run",
+  {
+    startX: 8,
+    startY: 8 + 32,
+    frameWidth: 16,
+    frameHeight: 20,
+    gapX: 16,
+    columns: 4,
+    rows: 1,
+  },
+  5,
+);
 
-const sprite = new Sprite(texture);
-sprite.setScale(2);
-
-sprite.addAnimation("idle", new Anim(frames, { speed: 5 }));
-
-sprite.play("idle");
-
-player.addSprite(sprite, game.renderer);
+player
+  .setSprite("knight", {
+    x: 8,
+    y: 8,
+    w: 16,
+    h: 20,
+  })
+  .setScale(2);
 
 scene.onUpdate = function (dt) {
   const input = game.getInput();
 
+  if (!input.isKeyDown("a") && !input.isKeyDown("d")) {
+    player.play("idle");
+  }
+
   if (input.isKeyDown("a")) {
     player.sprite.getView().scale.x = -player.sprite.scale;
+    player.play("run");
     player.setAcceleration(-1000, 0);
   }
 
   if (input.isKeyDown("d")) {
     player.sprite.getView().scale.x = player.sprite.scale;
+    player.play("run");
     player.setAcceleration(1000, 0);
   }
 
