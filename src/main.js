@@ -7,7 +7,7 @@ const game = await startGame(canvas);
 const player = game.createEntity();
 player.useGravity = true;
 player.hasCollision = true;
-player.friction = 0.98;
+player.friction = 0.97;
 player.debug = true;
 
 const scene = game.createScene();
@@ -26,9 +26,9 @@ ground.color = "green";
 const ground2 = game.createEntity();
 ground2.isStatic = true;
 ground2.hasCollision = true;
-ground2.size.set(400, 100);
+ground2.size.set(400, 1000);
 ground2.position.set(100, 200);
-ground2.color = "green";
+ground2.color = "red";
 
 scene.addEntity(ground);
 scene.addEntity(ground2);
@@ -80,13 +80,13 @@ scene.onUpdate = function (dt) {
   }
 
   if (input.isKeyDown("a")) {
-    player.sprite.getView().scale.x = -player.sprite.scale;
+    player.setFlip(true);
     player.play("run");
     player.setAcceleration(-1000, 0);
   }
 
   if (input.isKeyDown("d")) {
-    player.sprite.getView().scale.x = player.sprite.scale;
+    player.setFlip(false);
     player.play("run");
     player.setAcceleration(1000, 0);
   }

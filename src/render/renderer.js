@@ -49,6 +49,16 @@ export class Renderer {
 
   createCircle(diameter, color) {}
 
+  cropTexture(texture, x = 0, y = 0, w = 0, h = 0) {
+    const rect = new PIXI.Rectangle(x, y, w, h);
+    texture.source.scaleMode = "nearest";
+
+    return new PIXI.Texture({
+      source: texture.source,
+      frame: rect,
+    });
+  }
+
   addToStage(displayObject) {
     this.stage.addChild(displayObject);
   }

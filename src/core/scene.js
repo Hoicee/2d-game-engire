@@ -13,11 +13,6 @@ export class Scene {
 
   addEntity(entity) {
     this.entities.push(entity);
-
-    if (this.debug) {
-      this.debugGraphics = this.renderer.createDebugRect();
-    }
-
     entity.createView(this.renderer);
   }
 

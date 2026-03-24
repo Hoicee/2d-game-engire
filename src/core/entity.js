@@ -1,5 +1,4 @@
 import { Vec2 } from "../math/vec2.js";
-import * as PIXI from "pixi.js";
 
 let ENTITY_ID = 0;
 
@@ -8,6 +7,7 @@ export class Entity {
     this.id = ENTITY_ID++;
 
     this.game = game;
+    this.renderer = game.renderer;
 
     this.position = new Vec2();
     this.velocity = new Vec2();
@@ -15,13 +15,14 @@ export class Entity {
 
     this.useGravity = false;
 
+    this.defaultTexture = null;
     this.view = null;
     this.size = options.size;
 
     this.active = true;
     this.tags = new Set();
 
-    this.origin = { x: 0, y: 0 };
+    this.origin = new Vec2(0, 0);
 
     this.hasCollision = false;
     this.isStatic = false;
@@ -39,29 +40,19 @@ export class Entity {
   }
 
   setSprite(resource_tag, cut_options) {
-    const sprite = this.game.createSprite(resource_tag);
-
-    this.sprite = sprite;
+    this.sprite = this.game.createSprite(resource_tag);
     if (!this.sprite) return;
 
     this.view = this.sprite.getView();
 
     if (cut_options) {
-      const rect = new PIXI.Rectangle(
+      this.view.texture = this.renderer.cropTexture(
+        this.view.texture,
         cut_options.x,
         cut_options.y,
         cut_options.w,
         cut_options.h,
       );
-
-      this.view.texture.source.scaleMode = "nearest";
-
-      const newTexture = new PIXI.Texture({
-        source: this.view.texture.source,
-        frame: rect,
-      });
-
-      this.view.texture = newTexture;
     }
 
     this.game.renderer.addToStage(this.view);
@@ -74,10 +65,14 @@ export class Entity {
       );
     }
 
-    this.origin.x = this.sprite.anchor.x;
-    this.origin.y = this.sprite.anchor.y;
+    this.setAnchor(this.sprite.anchor.x, this.sprite.anchor.y);
 
     return this.sprite;
+  }
+
+  setFlip(flip) {
+    if (!this.sprite) return;
+    this.sprite.setFlip(flip);
   }
 
   play(tag) {
@@ -118,23 +113,41 @@ export class Entity {
     this.maxVelocity = Math.min(value, 3000);
   }
 
-  createView(renderer) {
-    if (this.view) return;
+  setAnchor(x = 0.5, y = 1) {
+    if (!this.origin.hasDiff(new Vec2(x, y))) return;
 
-    this.view = renderer.createRect(this.size.x, this.size.y, this.color);
+    x = Math.max(0, Math.min(x, 1));
+    y = Math.max(0, Math.min(y, 1));
+
+    this.origin.set(x, y);
+
+    if (this.sprite) {
+      this.sprite.setAnchor(x, y);
+    } else if (this.view) {
+      this.view.anchor.x = x;
+      this.view.anchor.y = y;
+    }
+  }
+
+  createView() {
+    this.makeRect();
 
     if (this.debug) {
-      this.debugGraphics = renderer.createDebugRect();
+      this.debugGraphics = this.renderer.createDebugRect();
     }
 
-    renderer.addToStage(this.view);
+    this.renderer.addToStage(this.view);
+  }
+
+  makeRect() {
+    if (this.view) return;
+    this.view = this.renderer.createRect(this.size.x, this.size.y, this.color);
   }
 
   update(dt) {
     if (!this.active) return;
 
     this.acceleration.set(0, 0);
-
     this.acceleration.add(this._inputAcceleration);
 
     if (this.useGravity) {
@@ -176,23 +189,23 @@ export class Entity {
     this.isGrounded = false;
   }
 
-  render(renderer) {
+  render() {
     if (!this.view) return;
 
     this.view.visible = this.visible;
 
-    renderer.updateTransform(this.view, this.position);
+    this.renderer.updateTransform(this.view, this.position);
 
     if (this.debug && this.debugGraphics) {
       const left = this.position.x - this.size.x * this.origin.x;
       const top = this.position.y - this.size.y * this.origin.y;
 
-      const updated = renderer.updateTransform(
+      const updated = this.renderer.updateTransform(
         { x: left, y: top },
         { x: left, y: top },
       );
 
-      renderer.drawRect(
+      this.renderer.drawRect(
         this.debugGraphics,
         updated.x,
         updated.y,
@@ -200,7 +213,7 @@ export class Entity {
         this.size.y,
       );
 
-      renderer.drawPoint(this.debugGraphics, updated.x, updated.y);
+      this.renderer.drawPoint(this.debugGraphics, updated.x, updated.y);
     }
   }
 

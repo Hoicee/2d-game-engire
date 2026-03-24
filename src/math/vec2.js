@@ -37,4 +37,8 @@ export class Vec2 {
     this.y = y ?? this.y;
     return this;
   }
+
+  hasDiff(v) {
+    return this.x != v.x || this.y != v.y;
+  }
 }

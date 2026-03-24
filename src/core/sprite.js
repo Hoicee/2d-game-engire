@@ -1,15 +1,17 @@
 import * as PIXI from "pixi.js";
 import { Animation } from "./animation";
+import { Vec2 } from "../math/vec2";
 
 export class SpriteResource {
-  constructor(texture) {
+  constructor(texture, renderer) {
     this.texture = texture;
+    this.renderer = renderer;
     this.animations = new Map();
   }
 
   static async load(renderer, url) {
     const texture = await renderer.loadTexture(url);
-    return new SpriteResource(texture);
+    return new SpriteResource(texture, renderer);
   }
 
   generateFrames({
@@ -27,13 +29,22 @@ export class SpriteResource {
     for (let y = 0; y < rows; y++) {
       for (let x = 0; x < columns; x++) {
         frames.push({
-          texture: this.texture,
           x: startX + x * (frameWidth + gapX),
           y: startY + y * (frameHeight + gapY),
           w: frameWidth,
           h: frameHeight,
         });
       }
+    }
+
+    for (const frame of frames) {
+      frame.texture = this.renderer.cropTexture(
+        this.texture,
+        frame.x,
+        frame.y,
+        frame.w,
+        frame.h,
+      );
     }
 
     return frames;
@@ -53,9 +64,6 @@ export class SpriteResource {
 
 export class Sprite {
   constructor(resource, renderer) {
-    // this.view = new PIXI.Sprite();
-    // this.view.texture.source.scaleMode = "nearest";
-
     this.resource = resource;
 
     this.texture = resource.texture;
@@ -73,23 +81,16 @@ export class Sprite {
     this.scale = 1;
     this.view.scale.set(this.scale);
 
-    this.anchor = { x: 0.5, y: 1 };
-    this.view.anchor.set(0.5, 1);
+    this.setAnchor(0.5, 1);
   }
 
   setAnchor(x, y) {
-    this.anchor.x = x;
-    this.anchor.y = y;
+    this.anchor = new Vec2(x, y);
     this.view.anchor.set(x, y);
   }
 
   setFlip(flip) {
     this.view.scale.x = flip ? -this.scale : this.scale;
-    if (flip) {
-      view.x = position.x + size.x;
-    } else {
-      view.x = position.x;
-    }
   }
 
   setScale(scale) {
@@ -106,10 +107,6 @@ export class Sprite {
 
     this.view.texture.frame = new PIXI.Rectangle(x, y, w, h);
     this.view.texture.updateUvs();
-  }
-
-  addAnimation(name, animation) {
-    this.animations.set(name, animation);
   }
 
   play(name) {
@@ -163,18 +160,7 @@ export class Sprite {
   }
 
   applyFrame(frame) {
-    const base = frame.texture;
-
-    const rect = new PIXI.Rectangle(frame.x, frame.y, frame.w, frame.h);
-
-    base.source.scaleMode = "nearest";
-
-    const newTexture = new PIXI.Texture({
-      source: base.source,
-      frame: rect,
-    });
-
-    this.view.texture = newTexture;
+    this.view.texture = frame.texture;
   }
 
   getView() {
