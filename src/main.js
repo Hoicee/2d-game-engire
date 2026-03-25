@@ -4,34 +4,26 @@ const canvas = document.getElementById("game");
 
 const game = await startGame(canvas);
 
-const player = game.createEntity();
-player.useGravity = true;
-player.hasCollision = true;
-player.friction = 0.97;
-player.debug = true;
+const player = game.createEntity(game.physics(), game.debug(true));
 
 const scene = game.createScene();
+scene.setCameraFollow(player);
+scene.setCameraSmoothness(1);
 
-scene.addEntity(player);
-scene.getCamera().follow(player);
-scene.camera.smoothness = 0.1;
+const ground = game.createEntity(
+  game.solid(),
+  game.pos(0, 400),
+  game.size(400, 50),
+);
 
-const ground = game.createEntity();
-ground.isStatic = true;
-ground.hasCollision = true;
-ground.size.set(400, 50);
-ground.position.set(0, 400);
-ground.color = "green";
+const ground2 = game.createEntity(
+  game.solid(),
+  game.pos(100, 200),
+  game.size(400, 100),
+  game.color("red"),
+);
 
-const ground2 = game.createEntity();
-ground2.isStatic = true;
-ground2.hasCollision = true;
-ground2.size.set(400, 1000);
-ground2.position.set(100, 200);
-ground2.color = "red";
-
-scene.addEntity(ground);
-scene.addEntity(ground2);
+scene.addEntityList(player, ground, ground2);
 
 const knight = await game.loadSprite("knight", "../assets/knight.png");
 
@@ -72,6 +64,8 @@ player
   })
   .setScale(2);
 
+player.component(game.pos(100, 100));
+
 scene.onUpdate = function (dt) {
   const input = game.getInput();
 
@@ -99,6 +93,10 @@ scene.onUpdate = function (dt) {
     if (player.velocity.y < 0) {
       player.setVelocity(player.velocity.x, player.velocity.y * 0.5);
     }
+  }
+
+  if (input.isKeyPressed("r")) {
+    player.setPosition(100, 100);
   }
 };
 game.pushScene(scene);

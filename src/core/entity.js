@@ -1,42 +1,54 @@
 import { Vec2 } from "../math/vec2.js";
 
-let ENTITY_ID = 0;
-
 export class Entity {
-  constructor(game, options = { size: new Vec2(0, 0) }) {
-    this.id = ENTITY_ID++;
+  acceptedComponentList = new Set(["pos"]);
 
+  constructor(game, componentList = []) {
     this.game = game;
     this.renderer = game.renderer;
 
-    this.position = new Vec2();
-    this.velocity = new Vec2();
-    this.acceleration = new Vec2();
+    this.view = null;
+    this.sprite = null;
+
+    this.position = new Vec2(0, 0);
+    this.velocity = new Vec2(0, 0);
+    this.acceleration = new Vec2(0, 0);
+
+    this.size = new Vec2(0, 0);
+    this.anchor = new Vec2(0, 0);
 
     this.useGravity = false;
-
-    this.defaultTexture = null;
-    this.view = null;
-    this.size = options.size;
-
     this.active = true;
-    this.tags = new Set();
-
-    this.origin = new Vec2(0, 0);
-
     this.hasCollision = false;
-    this.isStatic = false;
+    this.isStatic = true;
     this.visible = true;
 
+    this.tags = new Set();
+
     this.friction = 1;
-    this.maxVelocity = 3000;
+    this.maxVelocity = 10000;
 
     this._inputAcceleration = new Vec2();
 
-    this.sprite = null;
-
     this.debug = false;
     this.debugGraphics = null;
+
+    this.color = null;
+
+    this.loadComponentList(componentList);
+  }
+
+  loadComponentList(componentList) {
+    if (!componentList || componentList.length == 0) return;
+
+    for (const component of componentList) {
+      if (typeof component != "function") continue;
+      component(this);
+    }
+  }
+
+  component(...list) {
+    this.loadComponentList(list);
   }
 
   setSprite(resource_tag, cut_options) {
@@ -97,6 +109,14 @@ export class Entity {
     return this.tags.has(tag);
   }
 
+  setPosition(x, y) {
+    this.position.set(x, y);
+  }
+
+  setSize(w, h) {
+    this.size.set(w, h);
+  }
+
   setAcceleration(x, y) {
     this._inputAcceleration.set(x, y);
   }
@@ -110,16 +130,16 @@ export class Entity {
   }
 
   setMaxVelocity(value) {
-    this.maxVelocity = Math.min(value, 3000);
+    this.maxVelocity = Math.min(value, 10000);
   }
 
   setAnchor(x = 0.5, y = 1) {
-    if (!this.origin.hasDiff(new Vec2(x, y))) return;
+    if (!this.anchor.hasDiff(new Vec2(x, y))) return;
 
     x = Math.max(0, Math.min(x, 1));
     y = Math.max(0, Math.min(y, 1));
 
-    this.origin.set(x, y);
+    this.anchor.set(x, y);
 
     if (this.sprite) {
       this.sprite.setAnchor(x, y);
@@ -151,7 +171,7 @@ export class Entity {
     this.acceleration.add(this._inputAcceleration);
 
     if (this.useGravity) {
-      this.acceleration.y += 980;
+      this.acceleration.y += this.game.gravity;
     }
 
     this.velocity.add(this.acceleration.clone().scale(dt));
@@ -197,8 +217,8 @@ export class Entity {
     this.renderer.updateTransform(this.view, this.position);
 
     if (this.debug && this.debugGraphics) {
-      const left = this.position.x - this.size.x * this.origin.x;
-      const top = this.position.y - this.size.y * this.origin.y;
+      const left = this.position.x - this.size.x * this.anchor.x;
+      const top = this.position.y - this.size.y * this.anchor.y;
 
       const updated = this.renderer.updateTransform(
         { x: left, y: top },

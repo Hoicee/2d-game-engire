@@ -1,8 +1,8 @@
 export function getBounds(e) {
-  const left = e.position.x - e.size.x * e.origin.x;
+  const left = e.position.x - e.size.x * e.anchor.x;
   const right = left + e.size.x;
 
-  const top = e.position.y - e.size.y * e.origin.y;
+  const top = e.position.y - e.size.y * e.anchor.y;
   const bottom = top + e.size.y;
 
   return { left, right, top, bottom };

@@ -13,10 +13,16 @@ export class Camera {
     this.target = entity;
   }
 
+  removeFollow() {
+    this.target = null;
+  }
+
   update() {
     if (this.target) {
-      const targetx = this.target.position.x;
-      const targety = this.target.position.y;
+      const targetx =
+        this.target.position.x - this.target.size.x * this.target.anchor.x;
+      const targety =
+        this.target.position.y - this.target.size.y * this.target.anchor.y;
 
       this.position.set(targetx * this.smoothness, targety * this.smoothness);
     }

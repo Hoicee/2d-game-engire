@@ -1,5 +1,6 @@
 import { Camera } from "./camera.js";
 import { aabbCollision, resolveCollision } from "../math/collision.js";
+import { clamp } from "../math/helpers.js";
 
 export class Scene {
   constructor(renderer) {
@@ -14,6 +15,12 @@ export class Scene {
   addEntity(entity) {
     this.entities.push(entity);
     entity.createView(this.renderer);
+  }
+
+  addEntityList(...entityList) {
+    for (const entity of entityList) {
+      this.addEntity(entity);
+    }
   }
 
   removeEntity(entity) {
@@ -34,6 +41,20 @@ export class Scene {
 
   getCamera() {
     return this.camera;
+  }
+
+  setCameraFollow(entity) {
+    this.camera.follow(entity);
+  }
+
+  removeCameraFollow() {
+    this.camera.removeFollow();
+  }
+
+  setCameraSmoothness(smoothness) {
+    smoothness = clamp(smoothness, 0.1, 1);
+
+    this.camera.smoothness = smoothness;
   }
 
   init() {}

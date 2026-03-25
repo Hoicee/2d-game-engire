@@ -22,6 +22,8 @@ export class Game {
 
     this.spriteResourceMap = new Map();
 
+    this.gravity = 980;
+
     this.running = false;
   }
 
@@ -113,8 +115,12 @@ export class Game {
     return new Scene(this.renderer);
   }
 
-  createEntity() {
-    return new Entity(this);
+  createEntity(...componentList) {
+    return new Entity(this, componentList);
+  }
+
+  vec2(x, y) {
+    return new Vec2(x, y);
   }
 
   async loadSprite(tag, route) {
@@ -144,5 +150,49 @@ export class Game {
 
   getTime() {
     return this.time;
+  }
+
+  //COMPONENT CREATION FUNCTIONS...
+
+  // FOR ENTITY:
+  pos(x, y) {
+    return (entity) => {
+      entity.setPosition(x, y);
+    };
+  }
+
+  size(w, h) {
+    return (entity) => {
+      entity.setSize(w, h);
+    };
+  }
+
+  color(color) {
+    return (entity) => {
+      entity.color = color;
+    };
+  }
+
+  solid() {
+    return (entity) => {
+      entity.isStatic = true;
+      entity.hasCollision = true;
+      entity.color = "green";
+    };
+  }
+
+  physics() {
+    return (entity) => {
+      entity.isStatic = false;
+      entity.useGravity = true;
+      entity.hasCollision = true;
+      entity.friction = 0.98;
+    };
+  }
+
+  debug(debug) {
+    return (entity) => {
+      entity.debug = debug;
+    };
   }
 }
