@@ -5,16 +5,16 @@ import { Entity } from "./entity.js";
 import { Scene } from "./scene.js";
 import { Sprite, SpriteResource } from "./sprite.js";
 
-export async function startGame(canvas) {
-  const game = new Game(canvas);
+export async function startGame(canvas, options) {
+  const game = new Game(canvas, options);
   await game.init();
   return game;
 }
 export class Game {
-  constructor(canvas) {
+  constructor(canvas, options) {
     this.canvas = canvas;
 
-    this.renderer = new Renderer(canvas);
+    this.renderer = new Renderer(canvas, options);
     this.time = new Time();
     this.input = new Input(canvas);
 
@@ -34,7 +34,7 @@ export class Game {
   pushScene(scene) {
     this.scenes.push(scene);
 
-    if (scene.init) scene.init();
+    scene.init();
 
     scene.updateEnabled ??= true;
     scene.renderEnabled ??= true;
@@ -177,7 +177,6 @@ export class Game {
     return (entity) => {
       entity.isStatic = true;
       entity.hasCollision = true;
-      entity.color = "green";
     };
   }
 
@@ -187,6 +186,20 @@ export class Game {
       entity.useGravity = true;
       entity.hasCollision = true;
       entity.friction = 0.98;
+    };
+  }
+
+  rect() {
+    return (entity) => {
+      entity.makeRect();
+    };
+  }
+
+  tags(...tagList) {
+    return (entity) => {
+      for (const tag of tagList) {
+        entity.addTag(tag);
+      }
     };
   }
 

@@ -1,16 +1,21 @@
 import * as PIXI from "pixi.js";
 export class Renderer {
-  constructor(canvas) {
+  constructor(canvas, options) {
     this.app = new PIXI.Application();
     this.stage = this.app.stage;
     this.canvas = canvas;
     this.camera = null;
+    this.w = options?.w;
+    this.h = options?.h;
+    this.resizeTo = options?.resizeTo;
   }
 
   async init() {
     await this.app.init({
       canvas: this.canvas,
-      resizeTo: window,
+      resizeTo: this.resizeTo,
+      width: this.w,
+      height: this.h,
       autoDensity: false,
       backgroundColor: "#000000",
       antialias: true,
@@ -47,7 +52,29 @@ export class Renderer {
     return graphics;
   }
 
-  createCircle(diameter, color) {}
+  createText(text, x, y, options = {}) {
+    const {
+      fontFamily = "Arial",
+      fontSize = 16,
+      color = 0xffffff,
+      align = "left",
+    } = options;
+
+    const t = new PIXI.Text({
+      text,
+      style: {
+        fontFamily,
+        fontSize,
+        fill: color,
+        align,
+      },
+    });
+
+    t.x = Math.round(x);
+    t.y = Math.round(y);
+
+    return t;
+  }
 
   cropTexture(texture, x = 0, y = 0, w = 0, h = 0) {
     const rect = new PIXI.Rectangle(x, y, w, h);
@@ -60,10 +87,12 @@ export class Renderer {
   }
 
   addToStage(displayObject) {
+    if (!displayObject) return;
     this.stage.addChild(displayObject);
   }
 
   removeFromStage(displayObject) {
+    if (!displayObject) return;
     this.stage.removeChild(displayObject);
   }
 

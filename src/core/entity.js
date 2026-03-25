@@ -1,5 +1,4 @@
 import { Vec2 } from "../math/vec2.js";
-
 export class Entity {
   acceptedComponentList = new Set(["pos"]);
 
@@ -35,6 +34,10 @@ export class Entity {
 
     this.color = null;
 
+    this.type = null;
+
+    this.collisionWithMap = new Map();
+
     this.loadComponentList(componentList);
   }
 
@@ -67,7 +70,6 @@ export class Entity {
       );
     }
 
-    this.game.renderer.addToStage(this.view);
     if (this.size.x === 0 && this.size.y === 0) {
       const tex = this.sprite.getView().texture;
 
@@ -115,6 +117,10 @@ export class Entity {
 
   setSize(w, h) {
     this.size.set(w, h);
+    if (this.view) {
+      this.view.width = w;
+      this.view.height = h;
+    }
   }
 
   setAcceleration(x, y) {
@@ -149,24 +155,51 @@ export class Entity {
     }
   }
 
-  createView() {
-    this.makeRect();
-
-    if (this.debug) {
-      this.debugGraphics = this.renderer.createDebugRect();
+  makeRect() {
+    if (this.view) {
+      this.renderer.removeFromStage(this.view);
     }
 
-    this.renderer.addToStage(this.view);
+    this.type = "rect";
+
+    this.view = this.renderer.createRect(this.size.x, this.size.y, this.color);
   }
 
-  makeRect() {
-    if (this.view) return;
-    this.view = this.renderer.createRect(this.size.x, this.size.y, this.color);
+  makeText(text, x, y, options) {
+    if (this.view) {
+      this.renderer.removeFromStage(this.view);
+    }
+
+    this.type = "text";
+
+    this.view = this.renderer.createText(text, x, y, options);
+  }
+
+  changeText(newText) {
+    if (this.type != "text") return;
+    this.view.text = newText;
   }
 
   update(dt) {
     if (!this.active) return;
 
+    this.updatePhysics(dt);
+
+    if (this.sprite) {
+      const tex = this.sprite.getView().texture;
+
+      this.size.set(
+        tex.width * this.sprite.scale,
+        tex.height * this.sprite.scale,
+      );
+
+      this.sprite.update(dt);
+    }
+
+    this.isGrounded = false;
+  }
+
+  updatePhysics(dt) {
     this.acceleration.set(0, 0);
     this.acceleration.add(this._inputAcceleration);
 
@@ -194,19 +227,10 @@ export class Entity {
     this.position.add(this.velocity.clone().scale(dt));
 
     this._inputAcceleration.set(0, 0);
+  }
 
-    if (this.sprite) {
-      const tex = this.sprite.getView().texture;
-
-      this.size.set(
-        tex.width * this.sprite.scale,
-        tex.height * this.sprite.scale,
-      );
-
-      this.sprite.update(dt);
-    }
-
-    this.isGrounded = false;
+  onCollisionWith(entity, fn) {
+    this.collisionWithMap.set(entity, fn);
   }
 
   render() {
@@ -215,6 +239,11 @@ export class Entity {
     this.view.visible = this.visible;
 
     this.renderer.updateTransform(this.view, this.position);
+
+    if (!this.debugGraphics) {
+      this.debugGraphics = this.renderer.createDebugRect();
+      this.debugGraphics.zIndex = -1;
+    }
 
     if (this.debug && this.debugGraphics) {
       const left = this.position.x - this.size.x * this.anchor.x;
@@ -239,5 +268,6 @@ export class Entity {
 
   destroy() {
     this.active = false;
+    this.renderer.removeFromStage(this.view);
   }
 }

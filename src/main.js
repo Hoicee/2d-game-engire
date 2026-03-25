@@ -2,28 +2,38 @@ import { startGame } from "./index.js";
 
 const canvas = document.getElementById("game");
 
-const game = await startGame(canvas);
+const game = await startGame(canvas, { resizeTo: window });
 
-const player = game.createEntity(game.physics(), game.debug(true));
+const player = game.createEntity(game.physics());
 
 const scene = game.createScene();
 scene.setCameraFollow(player);
-scene.setCameraSmoothness(1);
+scene.setCameraSmoothness(0.1);
 
 const ground = game.createEntity(
-  game.solid(),
   game.pos(0, 400),
   game.size(400, 50),
+  game.color("green"),
+  game.tags("ground"),
+  game.rect(),
+  game.solid(),
 );
 
 const ground2 = game.createEntity(
-  game.solid(),
   game.pos(100, 200),
   game.size(400, 100),
-  game.color("red"),
+  game.color("blue"),
+  game.solid(),
+  game.rect(),
 );
 
-scene.addEntityList(player, ground, ground2);
+const text = game.createEntity(game.pos(50, 50));
+
+text.makeText("oie", 50, 50, {
+  fontSize: 24,
+});
+
+scene.addEntityList(player, ground, ground2, text);
 
 const knight = await game.loadSprite("knight", "../assets/knight.png");
 
@@ -66,7 +76,11 @@ player
 
 player.component(game.pos(100, 100));
 
-scene.onUpdate = function (dt) {
+player.onCollisionWith("ground", (other) => {
+  // other.destroy();
+});
+
+function movement() {
   const input = game.getInput();
 
   if (!input.isKeyDown("a") && !input.isKeyDown("d")) {
@@ -94,10 +108,18 @@ scene.onUpdate = function (dt) {
       player.setVelocity(player.velocity.x, player.velocity.y * 0.5);
     }
   }
+}
+
+scene.onUpdate = function (dt) {
+  const input = game.getInput();
+
+  movement();
 
   if (input.isKeyPressed("r")) {
-    player.setPosition(100, 100);
+    text.changeText("hello");
+    ground.setSize(100, 100);
   }
 };
+
 game.pushScene(scene);
 game.start();
