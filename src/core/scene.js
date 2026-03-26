@@ -64,6 +64,10 @@ export class Scene {
     this.camera.smoothness = smoothness;
   }
 
+  setCameraOffset(x, y) {
+    this.camera.setOffset(x, y);
+  }
+
   init() {
     if (!this.renderEnabled) return;
     for (const entity of this.entities) {

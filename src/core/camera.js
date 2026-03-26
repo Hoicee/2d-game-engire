@@ -3,6 +3,7 @@ import { Vec2 } from "../math/vec2.js";
 export class Camera {
   constructor() {
     this.position = new Vec2();
+    this.offset = new Vec2(0, 0);
     this.zoom = 1;
 
     this.smoothness = 1;
@@ -20,12 +21,20 @@ export class Camera {
   update() {
     if (this.target) {
       const targetx =
-        this.target.position.x - this.target.size.x * this.target.anchor.x;
+        this.target.position.x -
+        this.target.size.x * this.target.anchor.x -
+        this.offset.x;
       const targety =
-        this.target.position.y - this.target.size.y * this.target.anchor.y;
+        this.target.position.y -
+        this.target.size.y * this.target.anchor.y -
+        this.offset.y;
 
       this.position.set(targetx * this.smoothness, targety * this.smoothness);
     }
+  }
+
+  setOffset(x, y) {
+    this.offset.set(x, y);
   }
 
   worldToScreen(pos) {

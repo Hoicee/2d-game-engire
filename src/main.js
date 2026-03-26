@@ -6,7 +6,8 @@ const canvas = document.getElementById("game");
 const game = await startGame(canvas, { w: 600, h: 500, resizeTo: window });
 
 const scene = game.createScene();
-scene.setCameraSmoothness(0.1);
+// scene.setCameraSmoothness(0.1);
+scene.setCameraOffset(50, 50);
 
 const player = game.createEntity(game.physics());
 

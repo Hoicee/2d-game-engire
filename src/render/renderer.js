@@ -110,6 +110,11 @@ export class Renderer {
   }
 
   render(time) {
+    if (this.camera) {
+      if (this.camera.zoom != this.stage.scale.y) {
+        this.stage.scale.set(this.camera.zoom, this.camera.zoom);
+      }
+    }
     this.app.ticker.update(time);
   }
 
