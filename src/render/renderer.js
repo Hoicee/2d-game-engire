@@ -96,8 +96,8 @@ export class Renderer {
     this.stage.removeChild(displayObject);
   }
 
-  updateTransform(displayObject, position) {
-    if (!this.camera) {
+  updateTransform(displayObject, position, fixed = false) {
+    if (!this.camera || fixed) {
       displayObject.x = position.x;
       displayObject.y = position.y;
       return;

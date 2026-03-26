@@ -30,11 +30,13 @@ const ground2 = game.createEntity(
   game.rect(),
 );
 
-const text = game.createEntity(game.pos(50, 50));
+const text = game.createEntity();
 
-text.makeText("oi", 50, 50, {
+text.makeText("oi", 100, 100, {
   fontSize: 24,
 });
+
+text.fixedPosition = true;
 
 scene.addEntityList(player, ground, ground2, text);
 

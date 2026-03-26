@@ -15,6 +15,7 @@ export class Entity {
     this.cutOptions = null;
 
     this.position = new Vec2(0, 0);
+    this.fixedPosition = false;
     this.velocity = new Vec2(0, 0);
     this.acceleration = new Vec2(0, 0);
 
@@ -183,6 +184,7 @@ export class Entity {
     this.type = "text";
 
     this.view = this.renderer.createText(text, x, y, options);
+    this.position.set(x, y);
   }
 
   changeText(newText) {
@@ -253,7 +255,7 @@ export class Entity {
 
     this.view.visible = this.visible;
 
-    this.renderer.updateTransform(this.view, this.position);
+    this.renderer.updateTransform(this.view, this.position, this.fixedPosition);
 
     if (!this.debugGraphics) {
       this.debugGraphics = this.renderer.createDebugRect();
