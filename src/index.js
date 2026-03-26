@@ -1,6 +1,1 @@
-export { startGame, Game } from "./core/game.js";
-export { Time } from "./core/time.js";
-export { Entity } from "./core/entity.js";
-export { Scene } from "./core/scene.js";
-export { Sprite } from "./core/sprite.js";
-export { Animation } from "./core/animation.js";
+export { startGame } from "./core/game.js";

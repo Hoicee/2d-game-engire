@@ -1,3 +1,4 @@
+import { clamp } from "../math/helpers.js";
 import { Vec2 } from "../math/vec2.js";
 export class Entity {
   acceptedComponentList = new Set(["pos"]);
@@ -5,9 +6,13 @@ export class Entity {
   constructor(game, componentList = []) {
     this.game = game;
     this.renderer = game.renderer;
+    this.onClickList = [];
+    this.onHoldList = [];
+    this.onReleasedList = [];
 
     this.view = null;
     this.sprite = null;
+    this.cutOptions = null;
 
     this.position = new Vec2(0, 0);
     this.velocity = new Vec2(0, 0);
@@ -24,7 +29,7 @@ export class Entity {
 
     this.tags = new Set();
 
-    this.friction = 1;
+    this.drag = 1;
     this.maxVelocity = 10000;
 
     this._inputAcceleration = new Vec2();
@@ -60,15 +65,8 @@ export class Entity {
 
     this.view = this.sprite.getView();
 
-    if (cut_options) {
-      this.view.texture = this.renderer.cropTexture(
-        this.view.texture,
-        cut_options.x,
-        cut_options.y,
-        cut_options.w,
-        cut_options.h,
-      );
-    }
+    this.cutOptions = cut_options;
+    this.cutTexture();
 
     if (this.size.x === 0 && this.size.y === 0) {
       const tex = this.sprite.getView().texture;
@@ -84,6 +82,17 @@ export class Entity {
     return this.sprite;
   }
 
+  cutTexture() {
+    if (!this.cutOptions) return;
+    this.view.texture = this.renderer.cropTexture(
+      this.view.texture,
+      this.cutOptions.x,
+      this.cutOptions.y,
+      this.cutOptions.w,
+      this.cutOptions.h,
+    );
+  }
+
   setFlip(flip) {
     if (!this.sprite) return;
     this.sprite.setFlip(flip);
@@ -94,9 +103,10 @@ export class Entity {
     this.sprite.play(tag);
   }
 
-  stop(tag) {
+  stop() {
     if (!this.sprite) return;
-    this.sprite.stop(tag);
+    this.sprite.stop();
+    this.cutTexture();
   }
 
   addTag(tag) {
@@ -131,8 +141,8 @@ export class Entity {
     this.velocity.set(x, y);
   }
 
-  setFriction(value) {
-    this.friction = value;
+  setDrag(value) {
+    this.drag = clamp(value, 0, 1);
   }
 
   setMaxVelocity(value) {
@@ -180,6 +190,8 @@ export class Entity {
     this.view.text = newText;
   }
 
+  onUpdate() {}
+
   update(dt) {
     if (!this.active) return;
 
@@ -196,6 +208,8 @@ export class Entity {
       this.sprite.update(dt);
     }
 
+    this.onUpdate();
+
     this.isGrounded = false;
   }
 
@@ -209,19 +223,20 @@ export class Entity {
 
     this.velocity.add(this.acceleration.clone().scale(dt));
 
-    this.velocity.x *= this.friction;
+    this.velocity.x *= Math.pow(1 - this.drag, dt * 4);
 
     if (Math.abs(this.velocity.x) < 0.0001) this.velocity.x = 0;
     if (Math.abs(this.velocity.y) < 0.0001) this.velocity.y = 0;
 
-    this.velocity.x = Math.max(
+    this.velocity.x = clamp(
+      this.velocity.x,
       -this.maxVelocity,
-      Math.min(this.maxVelocity, this.velocity.x),
+      this.maxVelocity,
     );
-
-    this.velocity.y = Math.max(
+    this.velocity.y = clamp(
+      this.velocity.y,
       -this.maxVelocity,
-      Math.min(this.maxVelocity, this.velocity.y),
+      this.maxVelocity,
     );
 
     this.position.add(this.velocity.clone().scale(dt));
@@ -264,6 +279,18 @@ export class Entity {
 
       this.renderer.drawPoint(this.debugGraphics, updated.x, updated.y);
     }
+  }
+
+  onClick(fn) {
+    this.onClickList.push(fn);
+  }
+
+  onHold(fn) {
+    this.onHoldList.push(fn);
+  }
+
+  onReleased(fn) {
+    this.onReleasedList.push(fn);
   }
 
   destroy() {

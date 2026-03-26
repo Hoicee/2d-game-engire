@@ -4,6 +4,7 @@ import { Renderer } from "../render/renderer.js";
 import { Entity } from "./entity.js";
 import { Scene } from "./scene.js";
 import { Sprite, SpriteResource } from "./sprite.js";
+import { Vec2 } from "../math/vec2.js";
 
 export async function startGame(canvas, options) {
   const game = new Game(canvas, options);
@@ -16,7 +17,12 @@ export class Game {
 
     this.renderer = new Renderer(canvas, options);
     this.time = new Time();
+
     this.input = new Input(canvas);
+    this.mouse = this.input.mouse;
+    this.onClickList = [];
+    this.onHoldList = [];
+    this.onReleasedList = [];
 
     this.scenes = [];
 
@@ -34,10 +40,10 @@ export class Game {
   pushScene(scene) {
     this.scenes.push(scene);
 
-    scene.init();
-
     scene.updateEnabled ??= true;
     scene.renderEnabled ??= true;
+
+    scene.init();
 
     this.renderer.setCamera(scene.getCamera());
   }
@@ -75,14 +81,7 @@ export class Game {
 
     const dt = this.time.delta;
 
-    const scene = this.getScene();
-    if (scene && scene.updateEnabled) {
-      scene.update(dt);
-    }
-
-    if (scene && scene.renderEnabled) {
-      scene.render();
-    }
+    this.update(dt);
 
     this.renderer.render(time);
 
@@ -90,13 +89,33 @@ export class Game {
     requestAnimationFrame(this.loop.bind(this));
   }
 
+  onUpdate(dt) {}
+
   update(dt) {
+    this.onUpdate(dt);
+
+    if (this.mouse.pressed) {
+      this.onClickList.forEach((fn) => fn(this.mouse.x, this.mouse.y));
+    }
+
+    if (this.mouse.down) {
+      this.onHoldList.forEach((fn) => fn(this.mouse.x, this.mouse.y, dt));
+    }
+
+    if (this.mouse.released) {
+      this.onReleasedList.forEach((fn) => fn(this.mouse.x, this.mouse.y));
+    }
+
     const scene = this.getScene();
 
     if (!scene) return;
 
     if (scene.updateEnabled) {
       scene.update(dt);
+    }
+
+    if (scene && scene.renderEnabled) {
+      scene.render();
     }
   }
 
@@ -112,15 +131,11 @@ export class Game {
   }
 
   createScene() {
-    return new Scene(this.renderer);
+    return new Scene(this);
   }
 
   createEntity(...componentList) {
     return new Entity(this, componentList);
-  }
-
-  vec2(x, y) {
-    return new Vec2(x, y);
   }
 
   async loadSprite(tag, route) {
@@ -138,6 +153,24 @@ export class Game {
   async loadTexture(route) {
     const texture = await this.renderer.loadTexture(route);
     return texture;
+  }
+
+  onClick(fn) {
+    this.onClickList.push(fn);
+  }
+
+  onHold(fn) {
+    this.onHoldList.push(fn);
+  }
+
+  onReleased(fn) {
+    this.onReleasedList.push(fn);
+  }
+
+  getMouseWorld() {
+    return this.renderer.camera?.screenToWorld(
+      new Vec2(this.mouse.x, this.mouse.y),
+    );
   }
 
   getInput() {
@@ -185,7 +218,7 @@ export class Game {
       entity.isStatic = false;
       entity.useGravity = true;
       entity.hasCollision = true;
-      entity.friction = 0.98;
+      entity.setDrag(0.4);
     };
   }
 

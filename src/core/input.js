@@ -3,7 +3,7 @@ export class Input {
     this.keys = {};
     this.prevKeys = {};
 
-    this.mouse = { x: 0, y: 0 };
+    this.mouse = { x: 0, y: 0, down: false, pressed: false, released: false };
 
     window.addEventListener("keydown", (e) => {
       this.keys[e.key.toLowerCase()] = true;
@@ -19,10 +19,22 @@ export class Input {
       this.mouse.x = e.clientX - rect.left;
       this.mouse.y = e.clientY - rect.top;
     });
+
+    canvas.addEventListener("mousedown", () => {
+      this.mouse.down = true;
+      this.mouse.pressed = true;
+    });
+
+    canvas.addEventListener("mouseup", () => {
+      this.mouse.down = false;
+      this.mouse.released = true;
+    });
   }
 
   update() {
     this.prevKeys = { ...this.keys };
+    this.mouse.pressed = false;
+    this.mouse.released = false;
   }
 
   isKeyDown(key) {

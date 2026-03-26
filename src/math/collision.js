@@ -57,3 +57,15 @@ export function resolveCollision(a, b) {
     a.velocity.y = 0;
   }
 }
+
+export function pointInEntity(x, y, entity) {
+  const left = entity.position.x - entity.size.x * entity.anchor.x;
+  const top = entity.position.y - entity.size.y * entity.anchor.y;
+
+  return (
+    x >= left &&
+    x <= left + entity.size.x &&
+    y >= top &&
+    y <= top + entity.size.y
+  );
+}

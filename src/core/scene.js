@@ -1,12 +1,20 @@
 import { Camera } from "./camera.js";
-import { aabbCollision, resolveCollision } from "../math/collision.js";
+import {
+  aabbCollision,
+  pointInEntity,
+  resolveCollision,
+} from "../math/collision.js";
 import { clamp } from "../math/helpers.js";
+import { Vec2 } from "../math/vec2.js";
 
 export class Scene {
-  constructor(renderer) {
-    this.renderer = renderer;
+  constructor(game) {
+    this.game = game;
+    this.renderer = this.game.renderer;
     this.entities = [];
     this.camera = new Camera();
+
+    this.mouse = this.game.input.mouse;
 
     this.updateEnabled = true;
     this.renderEnabled = true;
@@ -57,6 +65,7 @@ export class Scene {
   }
 
   init() {
+    if (!this.renderEnabled) return;
     for (const entity of this.entities) {
       this.renderer.addToStage(entity.view);
     }
@@ -66,12 +75,21 @@ export class Scene {
     this.updateEnabled = false;
   }
 
+  enableUpdate() {
+    this.updateEnabled = true;
+  }
+
   disableRender() {
     for (const entity of this.entities) {
       this.renderer.removeFromStage(entity.view);
     }
     this.updateEnabled = false;
     this.renderEnabled = false;
+  }
+
+  enableRender() {
+    this.renderEnabled = true;
+    this.init();
   }
 
   destroy() {}
@@ -83,6 +101,32 @@ export class Scene {
 
     for (let entity of this.entities) {
       entity.update(dt, this.renderer);
+
+      const worldMouse = this.camera.screenToWorld(
+        new Vec2(this.mouse.x, this.mouse.y),
+      );
+
+      const hovering = pointInEntity(worldMouse.x, worldMouse.y, entity);
+
+      if (!hovering) continue;
+
+      if (this.mouse.pressed) {
+        entity.onClickList.forEach((fn) =>
+          fn(this.mouse.x, this.mouse.y, entity),
+        );
+      }
+
+      if (this.mouse.down) {
+        entity.onHoldList.forEach((fn) =>
+          fn(this.mouse.x, this.mouse.y, entity, dt),
+        );
+      }
+
+      if (this.mouse.released) {
+        entity.onReleasedList.forEach((fn) =>
+          fn(this.mouse.x, this.mouse.y, entity),
+        );
+      }
     }
 
     this.handleCollisions();

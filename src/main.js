@@ -1,14 +1,16 @@
 import { startGame } from "./index.js";
+import { Vec2 } from "./math/vec2.js";
 
 const canvas = document.getElementById("game");
 
-const game = await startGame(canvas, { resizeTo: window });
+const game = await startGame(canvas, { w: 600, h: 500, resizeTo: window });
+
+const scene = game.createScene();
+scene.setCameraSmoothness(0.1);
 
 const player = game.createEntity(game.physics());
 
-const scene = game.createScene();
 scene.setCameraFollow(player);
-scene.setCameraSmoothness(0.1);
 
 const ground = game.createEntity(
   game.pos(0, 400),
@@ -29,7 +31,7 @@ const ground2 = game.createEntity(
 
 const text = game.createEntity(game.pos(50, 50));
 
-text.makeText("oie", 50, 50, {
+text.makeText("oi", 50, 50, {
   fontSize: 24,
 });
 
@@ -77,7 +79,17 @@ player
 player.component(game.pos(100, 100));
 
 player.onCollisionWith("ground", (other) => {
-  // other.destroy();
+  other.destroy();
+});
+
+let playerTrackMouse = false;
+
+player.onClick((x, y) => {
+  playerTrackMouse = true;
+});
+
+game.onReleased(() => {
+  playerTrackMouse = false;
 });
 
 function movement() {
@@ -85,18 +97,19 @@ function movement() {
 
   if (!input.isKeyDown("a") && !input.isKeyDown("d")) {
     player.play("idle");
+    player.setVelocity(0);
   }
 
   if (input.isKeyDown("a")) {
     player.setFlip(true);
     player.play("run");
-    player.setAcceleration(-1000, 0);
+    player.setAcceleration(-1000);
   }
 
   if (input.isKeyDown("d")) {
     player.setFlip(false);
     player.play("run");
-    player.setAcceleration(1000, 0);
+    player.setAcceleration(1000);
   }
 
   if (input.isKeyPressed(" ") && player.isGrounded) {
@@ -108,14 +121,26 @@ function movement() {
       player.setVelocity(player.velocity.x, player.velocity.y * 0.5);
     }
   }
+
+  if (playerTrackMouse) {
+    player.useGravity = false;
+    const worldMouse = game.getMouseWorld();
+    player.setPosition(
+      worldMouse.x,
+      worldMouse.y + (player.size.y * player.anchor.y) / 2,
+    );
+  } else {
+    player.useGravity = true;
+  }
 }
 
-scene.onUpdate = function (dt) {
+let toggle = true;
+scene.onUpdate = async function (dt) {
   const input = game.getInput();
 
   movement();
 
-  if (input.isKeyPressed("r")) {
+  if (input.isKeyPressed("t")) {
     text.changeText("hello");
     ground.setSize(100, 100);
   }
