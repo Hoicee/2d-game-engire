@@ -118,6 +118,10 @@ export class Renderer {
     this.app.ticker.update(time);
   }
 
+  getScreenSize() {
+    return { width: this.app.screen.width, height: this.app.screen.height };
+  }
+
   createDebugRect() {
     const g = new PIXI.Graphics();
     g.fill(0xffffff);

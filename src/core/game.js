@@ -38,6 +38,10 @@ export class Game {
   }
 
   pushScene(scene) {
+    if (this.scenes.length > 0) {
+      this.popScene();
+    }
+
     this.scenes.push(scene);
 
     scene.updateEnabled ??= true;
@@ -51,7 +55,7 @@ export class Game {
   popScene() {
     const scene = this.scenes.pop();
 
-    if (scene && scene.destroy) {
+    if (scene) {
       scene.destroy();
     }
 
@@ -219,6 +223,12 @@ export class Game {
       entity.useGravity = true;
       entity.hasCollision = true;
       entity.setDrag(0.4);
+    };
+  }
+
+  anchor(x = 0.5, y = 1) {
+    return (entity) => {
+      entity.setAnchor(x, y);
     };
   }
 

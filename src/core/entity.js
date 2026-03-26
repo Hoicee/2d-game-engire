@@ -132,6 +132,10 @@ export class Entity {
       this.view.width = w;
       this.view.height = h;
     }
+
+    if (this.type == "rect") {
+      this.updateAnchor();
+    }
   }
 
   setAcceleration(x, y) {
@@ -153,16 +157,28 @@ export class Entity {
   setAnchor(x = 0.5, y = 1) {
     if (!this.anchor.hasDiff(new Vec2(x, y))) return;
 
-    x = Math.max(0, Math.min(x, 1));
-    y = Math.max(0, Math.min(y, 1));
+    x = clamp(x, 0, 1);
+    y = clamp(y, 0, 1);
 
     this.anchor.set(x, y);
+    this.updateAnchor();
+  }
 
+  updateAnchor() {
     if (this.sprite) {
-      this.sprite.setAnchor(x, y);
-    } else if (this.view) {
-      this.view.anchor.x = x;
-      this.view.anchor.y = y;
+      this.sprite.setAnchor(this.anchor.x, this.anchor.y);
+    } else if (this.view?.anchor) {
+      this.view.anchor.x = this.anchor.x;
+      this.view.anchor.y = this.anchor.y;
+    }
+
+    if (this.type == "rect" && this.view.pivot) {
+      this.makeRect();
+      this.renderer.addToStage(this.view);
+      this.view.pivot.set(
+        this.size.x * this.anchor.x,
+        this.size.y * this.anchor.y,
+      );
     }
   }
 

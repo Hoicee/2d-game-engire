@@ -151,3 +151,25 @@ scene.onUpdate = async function (dt) {
 
 game.pushScene(scene);
 game.start();
+
+const menuScene = game.createScene();
+
+const screenSize = game.renderer.getScreenSize();
+
+const box = game.createEntity(
+  game.pos(screenSize.width / 2, screenSize.height / 2),
+  game.size(200, 200),
+  game.rect(),
+  game.anchor(0.5, 0.5),
+);
+
+menuScene.addEntity(box);
+
+game.pushScene(menuScene);
+
+menuScene.onUpdate = (dt) => {
+  if (game.input.isKeyPressed("g")) {
+    box.setSize(300, 50);
+    box.setPosition(screenSize.width / 2, screenSize.height / 2);
+  }
+};

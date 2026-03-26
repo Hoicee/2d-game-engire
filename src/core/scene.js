@@ -96,7 +96,9 @@ export class Scene {
     this.init();
   }
 
-  destroy() {}
+  destroy() {
+    this.disableRender();
+  }
 
   onUpdate(dt) {}
 
