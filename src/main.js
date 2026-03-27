@@ -7,7 +7,7 @@ const game = await startGame(canvas, { w: 600, h: 500, resizeTo: window });
 
 const scene = game.createScene();
 // scene.setCameraSmoothness(0.1);
-scene.setCameraOffset(50, 50);
+scene.setCameraOffset(100, 100);
 
 const player = game.createEntity(game.physics());
 
@@ -30,13 +30,11 @@ const ground2 = game.createEntity(
   game.rect(),
 );
 
-const text = game.createEntity();
-
-text.makeText("oi", 100, 100, {
-  fontSize: 24,
-});
-
-text.fixedPosition = true;
+const text = game.createEntity(
+  game.text("Bem vindo"),
+  game.pos(10, 10),
+  game.fixed(),
+);
 
 scene.addEntityList(player, ground, ground2, text);
 
@@ -79,7 +77,7 @@ player
   })
   .setScale(2);
 
-player.component(game.pos(100, 100));
+player.component(game.pos(150, 200));
 
 player.onCollisionWith("ground", (other) => {
   other.destroy();
@@ -137,7 +135,6 @@ function movement() {
   }
 }
 
-let toggle = true;
 scene.onUpdate = async function (dt) {
   const input = game.getInput();
 
@@ -151,25 +148,3 @@ scene.onUpdate = async function (dt) {
 
 game.pushScene(scene);
 game.start();
-
-const menuScene = game.createScene();
-
-const screenSize = game.renderer.getScreenSize();
-
-const box = game.createEntity(
-  game.pos(screenSize.width / 2, screenSize.height / 2),
-  game.size(200, 200),
-  game.rect(),
-  game.anchor(0.5, 0.5),
-);
-
-menuScene.addEntity(box);
-
-game.pushScene(menuScene);
-
-menuScene.onUpdate = (dt) => {
-  if (game.input.isKeyPressed("g")) {
-    box.setSize(300, 50);
-    box.setPosition(screenSize.width / 2, screenSize.height / 2);
-  }
-};

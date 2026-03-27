@@ -238,11 +238,23 @@ export class Game {
     };
   }
 
+  text(text = "", options = { fontSize: 24 }) {
+    return (entity) => {
+      entity.makeText(text, 0, 0, options);
+    };
+  }
+
   tags(...tagList) {
     return (entity) => {
       for (const tag of tagList) {
         entity.addTag(tag);
       }
+    };
+  }
+
+  fixed(fixed = true) {
+    return (entity) => {
+      entity.fixedPosition = fixed;
     };
   }
 

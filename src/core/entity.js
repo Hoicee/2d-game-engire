@@ -1,5 +1,6 @@
 import { clamp } from "../math/helpers.js";
 import { Vec2 } from "../math/vec2.js";
+
 export class Entity {
   acceptedComponentList = new Set(["pos"]);
 
@@ -25,6 +26,10 @@ export class Entity {
     this.useGravity = false;
     this.active = true;
     this.hasCollision = false;
+
+    this.collisionBox = null;
+    this.hitboxList = [];
+
     this.isStatic = true;
     this.visible = true;
 
