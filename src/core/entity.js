@@ -2,8 +2,6 @@ import { clamp } from "../math/helpers.js";
 import { Vec2 } from "../math/vec2.js";
 
 export class Entity {
-  acceptedComponentList = new Set(["pos"]);
-
   constructor(game, componentList = []) {
     this.game = game;
     this.renderer = game.renderer;
